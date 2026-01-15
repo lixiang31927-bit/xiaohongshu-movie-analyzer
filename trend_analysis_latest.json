@@ -1,0 +1,99 @@
+{
+  "analysis_time": "2026-01-15T20:58:26.646562",
+  "data_source": "xiaohongshu_notes_latest.json",
+  "total_notes": 100,
+  "total_topics": 15,
+  "top_n": 5,
+  "top_topics": [
+    {
+      "rank": 1,
+      "topic": "动画电影推荐",
+      "note_count": 10,
+      "total_engagement": {
+        "likes": 49905,
+        "comments": 2421,
+        "collects": 9254,
+        "shares": 1500
+      },
+      "heat_score": 831.28,
+      "avg_engagement_per_note": 6308.0,
+      "sample_notes": [
+        "note_20260115_0001",
+        "note_20260115_0010",
+        "note_20260115_0025"
+      ]
+    },
+    {
+      "rank": 2,
+      "topic": "奥斯卡获奖电影",
+      "note_count": 11,
+      "total_engagement": {
+        "likes": 44073,
+        "comments": 1918,
+        "collects": 8694,
+        "shares": 678
+      },
+      "heat_score": 739.84,
+      "avg_engagement_per_note": 5033.0,
+      "sample_notes": [
+        "note_20260115_0000",
+        "note_20260115_0003",
+        "note_20260115_0009"
+      ]
+    },
+    {
+      "rank": 3,
+      "topic": "爱情电影推荐",
+      "note_count": 6,
+      "total_engagement": {
+        "likes": 27209,
+        "comments": 1530,
+        "collects": 6630,
+        "shares": 1177
+      },
+      "heat_score": 497.45,
+      "avg_engagement_per_note": 6091.0,
+      "sample_notes": [
+        "note_20260115_0008",
+        "note_20260115_0032",
+        "note_20260115_0037"
+      ]
+    },
+    {
+      "rank": 4,
+      "topic": "烧脑电影",
+      "note_count": 7,
+      "total_engagement": {
+        "likes": 23316,
+        "comments": 1143,
+        "collects": 5073,
+        "shares": 543
+      },
+      "heat_score": 418.4,
+      "avg_engagement_per_note": 4296.43,
+      "sample_notes": [
+        "note_20260115_0024",
+        "note_20260115_0028",
+        "note_20260115_0048"
+      ]
+    },
+    {
+      "rank": 5,
+      "topic": "最新上映电影",
+      "note_count": 10,
+      "total_engagement": {
+        "likes": 17141,
+        "comments": 982,
+        "collects": 2811,
+        "shares": 506
+      },
+      "heat_score": 348.39,
+      "avg_engagement_per_note": 2144.0,
+      "sample_notes": [
+        "note_20260115_0006",
+        "note_20260115_0017",
+        "note_20260115_0018"
+      ]
+    }
+  ]
+}

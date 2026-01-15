@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书电影趋势分析 - 今日报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .refresh-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 15px 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 2em;
+            margin: 40px 0 20px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .trends-container {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .trend-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trend-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .trend-card:hover {
+            transform: translateX(5px);
+        }
+
+        .trend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .trend-rank {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            min-width: 60px;
+        }
+
+        .trend-topic {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .heat-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .trend-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mini-stat {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .mini-stat .icon {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .mini-stat .value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .mini-stat .label {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .note-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .note-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .note-rank-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .note-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-right: 50px;
+            line-height: 1.4;
+        }
+
+        .note-content {
+            color: #555;
+            margin-bottom: 20px;
+            white-space: pre-line;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .note-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .note-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .note-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            border: 1px solid #667eea30;
+        }
+
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .note-topic {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-top: 60px;
+            opacity: 0.9;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .notes-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card .number {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 小红书电影趋势分析</h1>
+            <p class="subtitle">基于数据驱动的内容创作平台</p>
+            <div class="date-badge" id="dateInfo">📅 加载中...</div>
+            <button class="refresh-btn" onclick="loadLatestData()">🔄 刷新数据</button>
+        </header>
+
+        <div id="loadingMessage" class="loading">⏳ 正在加载最新数据...</div>
+        <div id="errorMessage" class="error" style="display:none;"></div>
+
+        <!-- 统计概览 -->
+        <div class="stats-grid" id="statsGrid" style="display:none;">
+            <div class="stat-card">
+                <div class="number" id="totalNotes">-</div>
+                <div class="label">📝 分析笔记数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalTopics">-</div>
+                <div class="label">🏷️ 主题类别</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="hotTopics">-</div>
+                <div class="label">🔥 热门主题</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="generatedNotes">-</div>
+                <div class="label">✍️ 生成笔记</div>
+            </div>
+        </div>
+
+        <!-- 热门主题趋势 -->
+        <h2 class="section-title" id="trendsTitle" style="display:none;">🔥 热门主题排行榜</h2>
+        <div class="trends-container" id="trendsContainer"></div>
+
+        <!-- 生成的笔记内容 -->
+        <h2 class="section-title" id="notesTitle" style="display:none;">✍️ 生成的小红书笔记</h2>
+        <div class="notes-container" id="notesContainer"></div>
+
+        <footer>
+            <p id="footerInfo">📊 数据来源：小红书电影笔记</p>
+            <p>🤖 由 AI 驱动的智能内容分析与生成系统</p>
+            <p style="margin-top: 20px; font-size: 0.9em;">
+                💡 使用三个模块化 Skills 完成：数据获取 → 趋势分析 → 内容生成
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局数据存储
+        let trendData = null;
+        let notesData = null;
+
+        // 页面加载时自动获取数据
+        window.addEventListener('DOMContentLoaded', loadLatestData);
+
+        // 加载最新数据
+        async function loadLatestData() {
+            showLoading();
+            hideError();
+            
+            try {
+                // 并行加载两个JSON文件
+                const [trendResponse, notesResponse] = await Promise.all([
+                    fetch('trend_analysis_latest.json'),
+                    fetch('generated_notes_latest.json')
+                ]);
+
+                if (!trendResponse.ok || !notesResponse.ok) {
+                    throw new Error('数据文件加载失败');
+                }
+
+                trendData = await trendResponse.json();
+                notesData = await notesResponse.json();
+
+                // 渲染数据
+                renderStats();
+                renderTrends();
+                renderNotes();
+                updateDateInfo();
+
+                hideLoading();
+                showContent();
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showError('数据加载失败，请确保已运行数据生成脚本。错误信息: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loadingMessage').style.display = 'block';
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.style.display = 'block';
+        }
+
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 显示内容区域
+        function showContent() {
+            document.getElementById('statsGrid').style.display = 'grid';
+            document.getElementById('trendsTitle').style.display = 'block';
+            document.getElementById('notesTitle').style.display = 'block';
+        }
+
+        // 更新日期信息
+        function updateDateInfo() {
+            if (trendData && trendData.analysis_time) {
+                const date = new Date(trendData.analysis_time);
+                const dateStr = date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('dateInfo').textContent = `📅 ${dateStr} 报告`;
+                
+                // 更新页脚
+                document.getElementById('footerInfo').textContent = 
+                    `📊 数据来源：小红书电影笔记 | 分析时间：${date.toLocaleString('zh-CN')}`;
+            }
+        }
+
+        // 渲染统计概览
+        function renderStats() {
+            if (!trendData) return;
+
+            document.getElementById('totalNotes').textContent = trendData.total_notes || 0;
+            document.getElementById('totalTopics').textContent = trendData.total_topics || 0;
+            document.getElementById('hotTopics').textContent = trendData.top_n || 0;
+            
+            if (notesData) {
+                document.getElementById('generatedNotes').textContent = notesData.generated_notes?.length || 0;
+            }
+        }
+
+        // 渲染热门主题
+        function renderTrends() {
+            if (!trendData || !trendData.top_topics) return;
+
+            const container = document.getElementById('trendsContainer');
+            container.innerHTML = '';
+
+            trendData.top_topics.forEach(topic => {
+                const trendCard = `
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <div class="trend-rank">#${topic.rank}</div>
+                            <div class="trend-topic">${topic.topic}</div>
+                            <div class="heat-badge">🔥 ${topic.heat_score.toFixed(2)}</div>
+                        </div>
+                        <div class="trend-stats">
+                            <div class="mini-stat">
+                                <div class="icon">📝</div>
+                                <div class="value">${topic.note_count}</div>
+                                <div class="label">笔记数</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="icon">👍</div>
+                                <div class="value">${formatNumber(topic.total_engagement.likes)}</div>
+                                <div class="label">点赞</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="icon">💬</div>
+                                <div class="value">${formatNumber(topic.total_engagement.comments)}</div>
+                                <div class="label">评论</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="icon">⭐</div>
+                                <div class="value">${formatNumber(topic.total_engagement.collects)}</div>
+                                <div class="label">收藏</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="icon">🔄</div>
+                                <div class="value">${formatNumber(topic.total_engagement.shares)}</div>
+                                <div class="label">分享</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="icon">📊</div>
+                                <div class="value">${formatNumber(Math.round(topic.avg_engagement_per_note))}</div>
+                                <div class="label">平均互动</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += trendCard;
+            });
+        }
+
+        // 渲染笔记内容
+        function renderNotes() {
+            if (!notesData || !notesData.generated_notes) return;
+
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = '';
+
+            notesData.generated_notes.forEach(note => {
+                const tagsHTML = note.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
+                
+                const noteCard = `
+                    <div class="note-card">
+                        <div class="note-rank-badge">#${note.topic_rank}</div>
+                        <h3 class="note-title">${escapeHtml(note.title)}</h3>
+                        <div class="note-content">${escapeHtml(note.content)}</div>
+                        <div class="tags-container">${tagsHTML}</div>
+                        <div class="note-meta">
+                            <span class="note-topic">${note.topic}</span>
+                            <span>⏰ ${note.best_posting_time}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += noteCard;
+            });
+        }
+
+        // 格式化数字（添加千位分隔符）
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // HTML转义（防止XSS）
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
