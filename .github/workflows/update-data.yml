@@ -1,0 +1,60 @@
+name: 自动更新小红书数据
+
+on:
+  # 每天UTC时间2点运行（北京时间上午10点）
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # 允许手动触发
+  workflow_dispatch:
+  
+  # 每次push到main分支时也运行
+  push:
+    branches: [ main ]
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4 openai python-dotenv
+        
+    - name: 运行数据更新脚本
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
+      run: |
+        python auto_update.py
+        
+    - name: 检查是否有更新
+      id: check_changes
+      run: |
+        git diff --exit-code || echo "has_changes=true" >> $GITHUB_OUTPUT
+        
+    - name: 提交更新
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add xiaohongshu_notes_latest.json
+        git add trend_analysis_latest.json
+        git add generated_notes_latest.json
+        git commit -m "🤖 自动更新数据 - $(date +'%Y-%m-%d %H:%M:%S')"
+        
+    - name: 推送更改
+      if: steps.check_changes.outputs.has_changes == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
